@@ -11,7 +11,7 @@ INCS	= ./includes
 SRCS_DIR= ./srcs
 OBJS_DIR= ./obj
 
-SRCF    = so_long
+SRCF    = so_long fps map player
 
 SRCS= $(addprefix ${SRCS_DIR}/, $(addsuffix .c, ${SRCF}))
 OBJS= $(addprefix ${OBJS_DIR}/, $(addsuffix .o, ${SRCF}))
