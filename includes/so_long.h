@@ -182,7 +182,6 @@ void    init_struct(game_data *game);
 
 void	init_window(game_data *game);
 
-
 //			MAP
 
 int		init_map(char *path, game_data *game);
@@ -209,6 +208,7 @@ void	player(game_data *game);
 void	init_sprites(game_data *game);
 void	load_sprite(char *s_name, int s_nbr, int s_type, game_data *game);
 char	*path_sprite(char *s_name, int i);
+void	destroy_sprites(game_data *game);
 
 void show_fps(game_data *game);
 void fps(game_data *game);
@@ -218,6 +218,8 @@ long long millitimestamp(void);
 void	draw_block(int x, int y, void *sprite, game_data *game);
 
 void	show_debug(game_data *game);
+
+void	free_to_all(game_data *game);
 
 /*
 char	**create_map(char *path);

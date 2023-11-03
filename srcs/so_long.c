@@ -4,12 +4,21 @@ int quiser(int i, void *mlx_win);
 
 void    init_struct(game_data *game)
 {
-	game->img = malloc(sizeof(t_data));
-	//if (game->img == NULL)
-	game->player = malloc(sizeof(player_st));
-	// Inicialize cada membro de game.img
-	game->img->img = NULL;
-	game->img->addr = NULL;  // Certifique-se de inicializar todos os membros
+	game->img = calloc(sizeof(t_data), 1);
+	if (game->img == NULL)
+	{
+		free(game->img);
+		ft_printf("Error.\n Nao foi possivel realizar alocaçao de memoria");
+		exit(EXIT_FAILURE);
+	}
+	game->player = calloc(sizeof(player_st), 1);
+	if (game->player == NULL)
+	{
+		free (game->player);
+		ft_printf("Error.\n Nao foi possivel realizar alocaçao de memoria");
+		exit(EXIT_FAILURE);
+	}
+	game->map = NULL;
 	game->img->img = NULL;
 	game->img->bits_per_pixel = 2000;
 	game->img->line_length = 200;
@@ -17,23 +26,27 @@ void    init_struct(game_data *game)
 	game->po[0] = 0;
 	game->po[1] = 0;
 	game->lm = 0;
-	game->sprites = ft_calloc(sizeof(t_sprites),7);
+	game->sprites = ft_calloc(1, sizeof(t_sprites));
 	if (!game->sprites)
+	{
+		free(game->sprites);
 		exit(EXIT_FAILURE);
-	game->player->col_collected = 0;
-	game->player->col_q = 0;
-	game->coin = ft_calloc(sizeof(t_coin), 2);
+	}
+	game->coin = ft_calloc(sizeof(t_coin), 1);
 	if (!game->coin)
+	{
+		free(game->coin);
 		exit(EXIT_FAILURE);
+	}
 	game->coin->max_frame = MCF;
 	game->coin->current_frame = 0;
 	game->fps = 0;
+
 	/* game->width = 0;
-	game->height = 0;
+	game->height = 0; */
 	game->col = 0;
-	game-> rows = 0;
+	game->rows = 0;
 	game->exit_x = 0;
-	game->lm = 0;
 
 	game->player->player_x = 0;
 	game->player->player_y = 0;
@@ -42,15 +55,14 @@ void    init_struct(game_data *game)
 	game->player->col_collected = 0;
 	game->player->col_q = 0;
 	game->player->collectable_pos[0] = 0;
-	game->player->collectable_pos[1] = 0; */
+	game->player->collectable_pos[1] = 0;
+	
 }
 
 void	init_window(game_data *game)
 {
-	game->mlx_win = mlx_new_window(game->mlx, game->width / 2, game->height / 2, "So long");
-	game->img->img = mlx_new_image(game->mlx, game->width, game->height);
-	game->img->addr = mlx_get_data_addr(game->img->img, &game->img->bits_per_pixel, &game->img->line_length,
-								&game->img->endian);
+	game->mlx_win = mlx_new_window(game->mlx, game->col / 2, game->rows / 2, "So long");
+	game->img->img = mlx_new_image(game->mlx, game->col, game->rows + 1);
 }
 
 int check_file(char *map)
@@ -73,25 +85,25 @@ int check_file(char *map)
 	return (error);
 }
 
-int	get_lines(char *map)
+int get_lines(char *map)
 {
-	int		fd;
-	int		i;
-	char	*line;
-	
-	i = 0;
-	fd = open(map, O_RDONLY);
-	if (fd < 0)
-		return (1);
-	line = get_next_line(fd);
-	while (line && i++ >= 0)
-	{
-		free(line);
-		line = get_next_line(fd);
-	}
-	close(fd);
-	free(line);
-	return (i);
+    int fd;
+    int i;
+    char *line;
+
+    i = 0;
+    fd = open(map, O_RDONLY);
+    if (fd < 0)
+        return -1;  // Retorna um valor negativo para indicar erro
+
+    while ((line = get_next_line(fd)) != NULL)
+    {
+        free(line);
+        i++;
+    }
+
+    close(fd);
+    return i;
 }
 
 /*
@@ -145,6 +157,7 @@ void	load_sprite(char *s_name, int s_nbr, int s_type, game_data *game)
 		if (fd < 0)
 		{
 			ft_printf("Erro.\nNao foi possivel abrir uma imagem\n");
+			free(path);
 			exit (EXIT_SUCCESS);
 		}
 		close(fd);
@@ -164,6 +177,55 @@ void	load_sprite(char *s_name, int s_nbr, int s_type, game_data *game)
 			game->sprites->c[i] = mlx_xpm_file_to_image(game->mlx, path, &d, &d);
 		free(path);
 	}
+}
+
+static void	destroy_sprite(char *s_name, int s_nbr, int s_type, game_data *game)
+{ 
+	char		*path;
+	int			i;
+	int			fd;
+	int			d;
+
+	d = BPX;
+	i = -1;
+	while (++i < s_nbr)
+	{
+		path = path_sprite(s_name, (i + 1));
+		fd = open(path, O_RDONLY);
+		if (fd < 0)
+		{
+			ft_printf("Erro.\nNao foi possivel abrir uma imagem\n");
+			free(path);
+			exit (EXIT_SUCCESS);
+		}
+		close(fd);
+		if (s_type == 1)
+			mlx_destroy_image(game->mlx, game->sprites->p[i]);
+		else if (s_type == 2)
+			mlx_destroy_image(game->mlx, game->sprites->tr[i]);
+		else if (s_type == 3)
+			mlx_destroy_image(game->mlx, game->sprites->tl[i]);
+		else if (s_type == 4)
+			mlx_destroy_image(game->mlx, game->sprites->h[i]);
+		else if (s_type == 5)
+			mlx_destroy_image(game->mlx, game->sprites->bg[i]);
+		else if (s_type == 6)
+			mlx_destroy_image(game->mlx, game->sprites->gt[i]);
+		else if (s_type == 7)
+			mlx_destroy_image(game->mlx, game->sprites->c[i]);
+		free(path);
+	}
+}
+
+void	destroy_sprites(game_data *game)
+{
+	destroy_sprite("player", 1, 1, game);
+	destroy_sprite("tile_rock", 37, 2, game);
+	destroy_sprite("lava_tile", 14, 3, game);
+	destroy_sprite("heart", 2, 4, game);
+	destroy_sprite("background", 1, 5, game);
+	destroy_sprite("gate", 1, 6, game);
+	destroy_sprite("coin", 9, 7, game);
 }
 
 void	init_sprites(game_data *game)
@@ -307,8 +369,9 @@ int	keyup_hook(int keycode, game_data *game)
 int	close_hook(int keycode, game_data *game)
 {
 	if (keycode == 0)
+	{
 		mlx_destroy_window(game->mlx, game->mlx_win);
-	exit(EXIT_SUCCESS);
+	}
 	return (0);
 }
 
@@ -393,27 +456,25 @@ void	wall(game_data *game)
 			if (game->map[rows][cols] == '1')
 			{
 				if (rows != 0 && game->map[rows - 1][cols] == '1' &&
-					game->map[rows][cols - 1] == '1')
+					game->map[rows][cols - 1] == '1' && game->map[rows - 1][cols - 1] != '1')
 					draw_block(cols * BPX + game->po[0],
 						rows * BPX + game->po[1], game->sprites->tr[12],
 						game);
 				else if (rows != 0 && game->map[rows - 1][cols] == '1' &&
-					game->map[rows][cols + 1] == '1')
+					game->map[rows][cols + 1] == '1' && game->map[rows - 1][cols + 1] != '1')
 					draw_block(cols * BPX + game->po[0],
 						rows * BPX + game->po[1], game->sprites->tr[11],
 						game);
-				else if (cols == game->col - 1 && (game->map[rows][cols - 1] == '0' || 
-					game->map[rows][cols - 1] == 'C'))
+				else if (cols == game->col - 1 && (game->map[rows][cols - 1] != '1'))
 					draw_block(cols * BPX + game->po[0],
 						rows * BPX + game->po[1], game->sprites->tr[3],
 						game);
-				else if (cols == 0 && (game->map[rows][cols + 1] == '0' || 
-					game->map[rows][cols + 1] == 'C'))
+				else if (cols == 0 && (game->map[rows][cols + 1] != '1'))
 					draw_block(cols * BPX + game->po[0],
 						rows * BPX + game->po[1], game->sprites->tr[5],
 						game);
 				else if (rows > 0 && game->map[rows][cols] == '1' && 
-					game->map[rows - 1][cols] == '0')
+					game->map[rows - 1][cols] != '1')
 					draw_block(cols * BPX + game->po[0],
 						rows * BPX + game->po[1], game->sprites->tr[1],
 						game);
@@ -422,7 +483,7 @@ void	wall(game_data *game)
 						rows * BPX + game->po[1], game->sprites->tr[4],
 						game);
 				if (rows != 0 && cols > 0 && game->map[rows][cols - 1] != '1' && game->map[rows][cols] == '1' &&
-					game->map[rows][cols + 1] == '1')
+					game->map[rows][cols + 1] == '1' && game->map[rows - 1][cols] != '1')
 					draw_block(cols * BPX + game->po[0],
 						rows * BPX + game->po[1], game->sprites->tr[0],
 						game);
@@ -479,6 +540,22 @@ void	item(game_data *game)
 	}
 }
 
+void	free_to_all(game_data *game)
+{
+	free_map(game->map);
+	if (game->img != NULL)
+	{
+		free(game->img);
+		game->img = NULL;
+	}
+	if (game->player != NULL)
+	{
+		free(game->player);
+		game->player = NULL;
+	}
+	destroy_sprites(game);
+}
+
 // General loop of the game which will be executed at best every 15ms
 static int	game_loop(game_data *game)
 {
@@ -486,7 +563,6 @@ static int	game_loop(game_data *game)
 	long long	diff_millisecs;
 
 	now = millitimestamp();
-	ft_printf("game lm %i\n", game->lm);
 	diff_millisecs = now - game->lm;
 	if (diff_millisecs > 15)
 	{
@@ -510,7 +586,7 @@ int main(int argc, char **argv)
 {
 	game_data game;
 	t_data *img;
-
+	
 	if (argc != 2)
 	{
 		ft_printf ("Invalid number of arguments\n");
@@ -528,10 +604,6 @@ int main(int argc, char **argv)
 	hook_register(&game);
 	mlx_loop_hook(game.mlx, game_loop, &game);
 	mlx_loop(game.mlx);
-	/* if (game.img != NULL)
-		free(game.img);
-	if (game.player != NULL)
-		free(game.player); */
 	exit(EXIT_SUCCESS);
 
 	//mlx_loop_hook(game.mlx, game_loop, &game);

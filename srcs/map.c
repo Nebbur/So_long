@@ -7,7 +7,7 @@ void	free_map(char **map)
 	i = -1;
 	while (map[++i])
 		free(map[i]);
-	free(map[i]);
+	free(map);
 }
 
 char	**create_map(char *path)
@@ -18,31 +18,31 @@ char	**create_map(char *path)
 	char	**map;
 
 	i = get_lines(path);
-	map = (char **)malloc(sizeof(char *) * (i + 1));
+	map = (char **)calloc(i + 1, sizeof(char *));
 	if (!map)
 		return (NULL);
 	fd = open(path, O_RDONLY);
 	if (fd < 0)
+	{
+		free(map); // Liberar map antes de retornar em caso de erro
+		close (fd);
 		return (NULL);
+	}
 	j = -1;
 	while (++j != i)
 	{
 		map[j] = get_next_line(fd);
 		if (!map[j])
 		{
-			free_map(map);
+			free_map(map); // Liberar map em caso de erro
+			map[j] = NULL;
+			close(fd);
 			return (NULL);
 		}
 	}
 	map[j] = NULL;
-	close (fd);
-	/* i = -1;
-	while (map[++i])
-	{
-		j = -1;
-		while (map[i][++j])
-			ft_printf("%c", map[i][j]);
-	} */
+	close(fd);
+
 	return (map);
 }
 
@@ -154,10 +154,7 @@ static int	path_check(char *str, game_data *game)
 
 	map_copy = create_map(str);
 	if (!map_copy)
-	{
-		free_map(map_copy);
 		return (1);	
-	}
 	canCollectAll(map_copy, game, game->player->player_pos[0], game->player->player_pos[1]);
 	if (game->player->col_q != game->player->col_collected)
 	{
@@ -200,13 +197,16 @@ int		check_wall(game_data *game)
 	
 	col = -1;
 	rows = -1;
-	/* ft_printf("game->map[%i][0] |%c|\n", col, game->map[col][0]);
-	ft_printf("game->map[%i][%i] |%c|\n", col, (ft_strlen_get((const char *)(game->map)) - 1), game->map[col][ft_strlen_get((const char *)(game->map)) - 1]); */
-	while (game->map[++col])
-		while (rows < game->rows && game->map[ft_strlen_get((const char *)(game->map)) - 1][++rows] != '\n' && col == 0)
-			if (game->map[col][0] != '1' || game->map[0][rows] != '1' ||
-			game->map[col][ft_strlen_get((const char *)(game->map)) - 1] != '1')
+	ft_printf("coll %i\nrows %i\n", game->col, game->rows);
+	while (game->map[++rows])
+	{
+		while (rows <= game->rows && game->map[game->rows][++col] != '\n' && (col == 0 || col == game->col - 1))
+		{
+			if (game->map[rows][0] != '1' || game->map[0][col] != '1' ||
+			game->map[rows][game->col - 1] != '1')
 				return (1);
+		}
+	}
 	return (0);
 }
 
