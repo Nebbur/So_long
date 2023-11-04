@@ -100,9 +100,7 @@ static void move_y(game_data *game)
 			if (game->map[x][y - 1] == 'E' && p->col_collected == p->col_q)
 			{
 				game->map[x][y - 1] = 'P';
-				free_to_all(game);
-				mlx_destroy_window(game->mlx, game->mlx_win);			
-				exit(EXIT_SUCCESS);
+				mlx_loop_end(game->mlx);
 			}
 			else if (game->map[x][y - 1] == 'E' || game->map[x][y - 1] == '1')
 				;
@@ -120,9 +118,7 @@ static void move_y(game_data *game)
 		if (game->map[x][y + 1] == 'E' && p->col_collected == p->col_q)
 		{
 			game->map[x][y + 1] = 'P';
-			free_to_all(game);
-			mlx_destroy_window(game->mlx, game->mlx_win);
-			exit(EXIT_SUCCESS);
+			mlx_loop_end(game->mlx);
 		}
 		else if (game->map[x][y + 1] == 'E' || game->map[x][y + 1] == '1')
 			;
@@ -150,9 +146,7 @@ static void move_x(game_data *game)
 		if (game->map[x - 1][y] == 'E' && p->col_collected == p->col_q)
 		{
 			game->map[x - 1][y] = 'P';
-			free_to_all(game);
-			mlx_destroy_window(game->mlx, game->mlx_win);
-			exit(EXIT_SUCCESS);
+			mlx_loop_end(game->mlx);
 		}
 		else if (game->map[x - 1][y] == 'E' || game->map[x - 1][y] == '1')
 			;
@@ -169,9 +163,7 @@ static void move_x(game_data *game)
 		if (game->map[x + 1][y] == 'E' && p->col_collected == p->col_q)
 		{
 			game->map[x + 1][y] = 'P';
-			free_to_all(game);
-			mlx_destroy_window(game->mlx, game->mlx_win);
-			exit(EXIT_SUCCESS);
+			mlx_loop_end(game->mlx);
 		}
 		else if (game->map[x + 1][y] == 'E' || game->map[x + 1][y] == '1')
 			;

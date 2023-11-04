@@ -91,9 +91,9 @@ typedef struct	s_sprites
 	void	*tr[37];
 	void	*tl[14];
 	void	*h[2];
-	void	*bg[2];
+	void	*bg[1];
 	void	*gt[1];
-	void	*c[9];
+	void	*c[10];
 }				t_sprites;
 
 typedef struct	s_coin
@@ -181,6 +181,8 @@ int 	check_file(char *map);
 void    init_struct(game_data *game);
 
 void	init_window(game_data *game);
+
+void	ft_clearlst(t_list **lst);
 
 //			MAP
 

@@ -194,20 +194,25 @@ int		check_wall(game_data *game)
 {
 	int	col;
 	int	rows;
-	
+	int error;
+
+	error = 0;
 	col = -1;
 	rows = -1;
-	ft_printf("coll %i\nrows %i\n", game->col, game->rows);
 	while (game->map[++rows])
 	{
-		while (rows <= game->rows && game->map[game->rows][++col] != '\n' && (col == 0 || col == game->col - 1))
+		col = -1;
+		while ((rows == 0 || rows == game->rows) && ++col < game->col)
 		{
-			if (game->map[rows][0] != '1' || game->map[0][col] != '1' ||
-			game->map[rows][game->col - 1] != '1')
-				return (1);
+			if (game->map[rows][col] != '1')
+				error = 1;
 		}
+		if (game->map[rows][0] != '1' || game->map[rows][game->col - 1] != '1')
+				error = 1;
 	}
-	return (0);
+	if (error == 1)
+		ft_printf("Error. Invalid wall.\n");
+	return (error);
 }
 
 int		check_pce(game_data *game)
@@ -245,12 +250,24 @@ int	init_map(char *path, game_data *game)
 		exit (1);
 
 	game->map = create_map(path);
-	if (check_rectangular_map(game) != 0 || check_pce(game) != 0 || 
+	if (check_rectangular_map(game) != 0)
+		exit(1);
+	if (check_pce(game) != 0)
+		exit(1);
+	if (check_rows_cols(game) != 0)
+		exit(1);
+	if (check_wall(game) != 0)
+		exit(1);
+	if (check_obstacles_or_not(game) != 0)
+		exit(1);
+	if (path_check(path, game) != 0)
+		exit(1);
+	/* if (check_rectangular_map(game) != 0 || check_pce(game) != 0 || 
 		check_rows_cols(game) != 0 || check_wall(game) != 0 ||
 		check_obstacles_or_not(game) != 0 || path_check(path, game) != 0)
 	{
 		ft_printf("Error.\nMap's invalid.\n");
 		exit (1);
-	}
+	} */
 	return (0);
 }

@@ -41,6 +41,7 @@ char	*ft_strjoin_get(char *s1, char *s2)
 	i = 0;
 	j = 0;
 	str = malloc(ft_strlen_get(s1) + ft_strlen_get(s2) + 1);
+	
 	if (!str)
 		return (NULL);
 	if (s1 == 0 && s2 == 0)

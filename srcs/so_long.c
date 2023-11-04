@@ -18,6 +18,13 @@ void    init_struct(game_data *game)
 		ft_printf("Error.\n Nao foi possivel realizar alocaçao de memoria");
 		exit(EXIT_FAILURE);
 	}
+	game->enemies = NULL;
+	/* game->enemies = calloc(sizeof(t_list), 1);
+	if (game->enemies == NULL)
+	{
+		free(game->enemies);
+		exit(EXIT_FAILURE);
+	} */
 	game->map = NULL;
 	game->img->img = NULL;
 	game->img->bits_per_pixel = 2000;
@@ -26,7 +33,7 @@ void    init_struct(game_data *game)
 	game->po[0] = 0;
 	game->po[1] = 0;
 	game->lm = 0;
-	game->sprites = ft_calloc(1, sizeof(t_sprites));
+	game->sprites = ft_calloc(sizeof(t_sprites), 1);
 	if (!game->sprites)
 	{
 		free(game->sprites);
@@ -56,7 +63,7 @@ void    init_struct(game_data *game)
 	game->player->col_q = 0;
 	game->player->collectable_pos[0] = 0;
 	game->player->collectable_pos[1] = 0;
-	
+	game->dbg = 0;
 }
 
 void	init_window(game_data *game)
@@ -87,23 +94,23 @@ int check_file(char *map)
 
 int get_lines(char *map)
 {
-    int fd;
-    int i;
-    char *line;
+	int fd;
+	int i;
+	char *line;
 
-    i = 0;
-    fd = open(map, O_RDONLY);
-    if (fd < 0)
-        return -1;  // Retorna um valor negativo para indicar erro
+	i = 0;
+	fd = open(map, O_RDONLY);
+	if (fd < 0)
+		return -1;  // Retorna um valor negativo para indicar erro
 
-    while ((line = get_next_line(fd)) != NULL)
-    {
-        free(line);
-        i++;
-    }
+	while ((line = get_next_line(fd)) != NULL)
+	{
+		free(line);
+		i++;
+	}
 
-    close(fd);
-    return i;
+	close(fd);
+	return i;
 }
 
 /*
@@ -225,7 +232,8 @@ void	destroy_sprites(game_data *game)
 	destroy_sprite("heart", 2, 4, game);
 	destroy_sprite("background", 1, 5, game);
 	destroy_sprite("gate", 1, 6, game);
-	destroy_sprite("coin", 9, 7, game);
+	destroy_sprite("coin", 10, 7, game);
+	free(game->sprites);
 }
 
 void	init_sprites(game_data *game)
@@ -236,7 +244,7 @@ void	init_sprites(game_data *game)
 	load_sprite("heart", 2, 4, game);
 	load_sprite("background", 1, 5, game);
 	load_sprite("gate", 1, 6, game);
-	load_sprite("coin", 9, 7, game);
+	load_sprite("coin", 10, 7, game);
 }
 
 void	init_camera(game_data *game)
@@ -455,7 +463,7 @@ void	wall(game_data *game)
 		{
 			if (game->map[rows][cols] == '1')
 			{
-				if (rows != 0 && game->map[rows - 1][cols] == '1' &&
+				if (rows != 0 && cols > 0 && game->map[rows - 1][cols] == '1' &&
 					game->map[rows][cols - 1] == '1' && game->map[rows - 1][cols - 1] != '1')
 					draw_block(cols * BPX + game->po[0],
 						rows * BPX + game->po[1], game->sprites->tr[12],
@@ -487,7 +495,7 @@ void	wall(game_data *game)
 					draw_block(cols * BPX + game->po[0],
 						rows * BPX + game->po[1], game->sprites->tr[0],
 						game);
-				else if (rows != 0 && cols < game->col - 1 && game->map[rows][cols + 1] != '1' && game->map[rows][cols] == '1' &&
+				else if (rows != 0 && cols < game->col - 1 && cols > 0 && game->map[rows][cols + 1] != '1' && game->map[rows][cols] == '1' &&
 					game->map[rows][cols - 1] == '1')
 					draw_block(cols * BPX + game->po[0],
 						rows * BPX + game->po[1], game->sprites->tr[2],
@@ -505,7 +513,7 @@ void	wall(game_data *game)
 						rows * BPX + game->po[1], game->sprites->tr[35],
 						game);
 			}
-			else if (game->map[rows][cols] == 'E')
+			else if (cols < game->col && game->map[rows][cols] == 'E')
 				draw_block(cols * BPX + game->po[0],
 				rows * BPX + game->po[1], game->sprites->gt[0],
 				game);
@@ -540,9 +548,24 @@ void	item(game_data *game)
 	}
 }
 
+void ft_clearlst(t_list **lst)
+{
+	t_list *temp;
+
+	temp = *lst;
+	while (temp != NULL)
+	{
+		t_list *next = temp->next;
+		free(temp);
+		temp = next;
+	}
+
+	*lst = NULL;
+}
+
+
 void	free_to_all(game_data *game)
 {
-	free_map(game->map);
 	if (game->img != NULL)
 	{
 		free(game->img);
@@ -553,7 +576,17 @@ void	free_to_all(game_data *game)
 		free(game->player);
 		game->player = NULL;
 	}
+	if (game->enemies != NULL)
+	{
+		ft_clearlst(&game->enemies);
+		game->enemies = NULL;
+	}
+	free(game->coin);
 	destroy_sprites(game);
+	mlx_destroy_window(game->mlx, game->mlx_win);
+	mlx_destroy_display(game->mlx);
+	free(game->mlx);
+	free_map(game->map);
 }
 
 // General loop of the game which will be executed at best every 15ms
@@ -585,14 +618,16 @@ static int	game_loop(game_data *game)
 int main(int argc, char **argv)
 {
 	game_data game;
-	t_data *img;
-	
+
 	if (argc != 2)
 	{
 		ft_printf ("Invalid number of arguments\n");
 		return (1);
 	}
 	game.mlx = mlx_init();
+	//verify_alloc(game.mlx);
+	if (!game.mlx)
+		mlx_destroy_display(game.mlx);
 	mlx_get_screen_size(game.mlx, &game.width, &game.height);
 	game.mlx_win = mlx_new_window(game.mlx, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE);
 	init_struct(&game);
@@ -604,6 +639,7 @@ int main(int argc, char **argv)
 	hook_register(&game);
 	mlx_loop_hook(game.mlx, game_loop, &game);
 	mlx_loop(game.mlx);
+	free_to_all(&game);
 	exit(EXIT_SUCCESS);
 
 	//mlx_loop_hook(game.mlx, game_loop, &game);
