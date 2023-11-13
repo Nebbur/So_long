@@ -235,7 +235,11 @@ int		check_pce(game_data *game)
 			else if (game->map[rows][col] == 'C')
 				game->player->col_q++;
 			else if (game->map[rows][col] == 'E')
+			{
+				game->exit_x = rows;
+				game->exit_y = col;
 				count_e++;
+			}
 		}
 	}
 	game->rows = rows - 1;

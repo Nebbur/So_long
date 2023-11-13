@@ -25,6 +25,7 @@ void    init_struct(game_data *game)
 		free(game->enemies);
 		exit(EXIT_FAILURE);
 	} */
+	game->player_out = 0;
 	game->map = NULL;
 	game->img->img = NULL;
 	game->img->bits_per_pixel = 2000;
@@ -33,6 +34,7 @@ void    init_struct(game_data *game)
 	game->po[0] = 0;
 	game->po[1] = 0;
 	game->lm = 0;
+	game->moves = 0;
 	game->sprites = ft_calloc(sizeof(t_sprites), 1);
 	if (!game->sprites)
 	{
@@ -182,6 +184,10 @@ void	load_sprite(char *s_name, int s_nbr, int s_type, game_data *game)
 			game->sprites->gt[i] = mlx_xpm_file_to_image(game->mlx, path, &d, &d);
 		else if (s_type == 7)
 			game->sprites->c[i] = mlx_xpm_file_to_image(game->mlx, path, &d, &d);
+		else if (s_type == 8)
+			game->sprites->s[i] = mlx_xpm_file_to_image(game->mlx, path, &d, &d);
+		else if (s_type == 9)
+			game->sprites->l[i] = mlx_xpm_file_to_image(game->mlx, path, &d, &d);
 		free(path);
 	}
 }
@@ -220,6 +226,10 @@ static void	destroy_sprite(char *s_name, int s_nbr, int s_type, game_data *game)
 			mlx_destroy_image(game->mlx, game->sprites->gt[i]);
 		else if (s_type == 7)
 			mlx_destroy_image(game->mlx, game->sprites->c[i]);
+		else if (s_type == 8)
+			mlx_destroy_image(game->mlx, game->sprites->s[i]);
+		else if (s_type == 9)
+			mlx_destroy_image(game->mlx, game->sprites->l[i]);
 		free(path);
 	}
 }
@@ -231,8 +241,10 @@ void	destroy_sprites(game_data *game)
 	destroy_sprite("lava_tile", 14, 3, game);
 	destroy_sprite("heart", 2, 4, game);
 	destroy_sprite("background", 1, 5, game);
-	destroy_sprite("gate", 1, 6, game);
+	destroy_sprite("gate", 7, 6, game);
 	destroy_sprite("coin", 10, 7, game);
+	destroy_sprite("scroll", 2, 8, game);
+	destroy_sprite("letter", 4, 9, game);
 	free(game->sprites);
 }
 
@@ -243,8 +255,10 @@ void	init_sprites(game_data *game)
 	load_sprite("lava_tile", 14, 3, game);
 	load_sprite("heart", 2, 4, game);
 	load_sprite("background", 1, 5, game);
-	load_sprite("gate", 1, 6, game);
+	load_sprite("gate", 7, 6, game);
 	load_sprite("coin", 10, 7, game);
+	load_sprite("scroll", 2, 8, game);
+	load_sprite("letter", 4, 9, game);
 }
 
 void	init_camera(game_data *game)
@@ -377,9 +391,7 @@ int	keyup_hook(int keycode, game_data *game)
 int	close_hook(int keycode, game_data *game)
 {
 	if (keycode == 0)
-	{
-		mlx_destroy_window(game->mlx, game->mlx_win);
-	}
+		mlx_loop_end(game->mlx);
 	return (0);
 }
 
@@ -388,6 +400,41 @@ void	hook_register(game_data *game)
 	mlx_hook(game->mlx_win, 17, 1L << 0, close_hook, game);
 	mlx_hook(game->mlx_win, 2, 1L << 0, keydown_hook, game);
 	mlx_hook(game->mlx_win, 3, 1L << 1, keyup_hook, game);
+}
+
+// Função para converter decimal para binário e retornar como inteiro
+int decimalParaBinario(int decimal)
+{
+	int binario = 0, base = 1;
+	int resto;
+
+	if (decimal == 0)
+		return (0);
+
+	while (decimal > 0)
+	{
+		resto = decimal % 2;
+		binario = binario + resto * base;
+		decimal = decimal / 2;
+		base = base * 10;
+	}
+
+	return (binario);
+}
+
+void	show_moves(game_data *game)
+{
+	char	*m;
+	char	*debug_msg;
+	int		color;
+
+	color = 00110010 + decimalParaBinario(game->moves);
+
+	m = ft_itoa(game->moves);
+	debug_msg = ft_strjoin("MOVES: ", m);
+	free (m);
+	mlx_string_put(game->mlx, game->mlx_win, 20, 24, 00110010, debug_msg);
+	free (debug_msg);
 }
 
 void	show_debug(game_data *game)
@@ -444,6 +491,7 @@ void	player_position(game_data *game)
 
 void	show_hud(game_data *game)
 {
+	show_moves(game);
 	//mlx_put_image_to_window(game->mlx, game->mlx_win, game->sprites->h[0], \
 	//HUD_LM + 40, 40);
 	//show_movement(so_long);
@@ -487,9 +535,20 @@ void	wall(game_data *game)
 						rows * BPX + game->po[1], game->sprites->tr[1],
 						game);
 				else
-					draw_block(cols * BPX + game->po[0],
-						rows * BPX + game->po[1], game->sprites->tr[4],
-						game);
+				{
+					if (cols == 0 && rows == 0)
+						draw_block(cols * BPX + game->po[0],
+							rows * BPX + game->po[1], game->sprites->s[0],
+							game);
+					else if (cols == 1 && rows == 0)
+						draw_block(cols * BPX + game->po[0],
+							rows * BPX + game->po[1], game->sprites->s[1],
+							game);
+					else
+						draw_block(cols * BPX + game->po[0],
+							rows * BPX + game->po[1], game->sprites->tr[4],
+							game);
+				}
 				if (rows != 0 && cols > 0 && game->map[rows][cols - 1] != '1' && game->map[rows][cols] == '1' &&
 					game->map[rows][cols + 1] == '1' && game->map[rows - 1][cols] != '1')
 					draw_block(cols * BPX + game->po[0],
@@ -543,7 +602,7 @@ void	item(game_data *game)
 				draw_block(cols * BPX + game->po[0],
 					rows * BPX + game->po[1], s->c[c],
 					game);
-			}	
+			}
 		}
 	}
 }
@@ -600,19 +659,42 @@ static int	game_loop(game_data *game)
 	if (diff_millisecs > 15)
 	{
 		fps(game);
-		mlx_clear_window(game->mlx, game->mlx_win);
+		if (mlx_clear_window(game->mlx, game->mlx_win) == 1)
+			ft_printf("clear window success\n");
 		player_position(game);
 		background(game);
 		wall(game);
 		item(game);
 		//gate(game);
 		//monster(game);
-		player(game);
-		if (game->dbg)
+		if (game->player_out == 1)
+			ft_printf("\n\nAbCd|\n");
+
+		if (game->player_out == 1)
+			actual_position(game);
+		else
+			player(game);
+		//if (game->dbg)
 			show_debug(game);
 		show_hud(game);
 	}
 	return (1);
+}
+
+void	print_issue(game_data *game)
+{
+	/* t_sprites	*s;
+
+	s = game->sprites;
+	if (mlx_clear_window(game->mlx, game->mlx_win) == 1)
+		ft_printf("clear window success\n");
+	mlx_put_image_to_window(game->mlx, game->mlx_win, 
+		s->l[0], 3 * 128 + game->po[0], 3 * 128 + game->po[1]);
+	draw_block(2 * 128 + game->po[0], 2 * 128 + game->po[1], s->l[1], game);
+
+	usleep(3500000);
+	*/
+	mlx_loop_end(game->mlx);
 }
 
 int main(int argc, char **argv)

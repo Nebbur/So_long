@@ -18,7 +18,7 @@
 # define BPX 64
 # define HPX 20
 # define MPX 1
-# define MCF 10 //MAX COIN FRAM
+# define MCF 10 //MAX COIN FRAME
 # define EHPX 10
 # define NBR_LIFE 3
 # define LETTER_KEY_LEFT	97
@@ -77,12 +77,14 @@ typedef struct player_stt
 }		player_st;
 
 /*
-	p = player sprite
-	tr = tile rock sprite
-	tl = tile lava sprite
-	h = heart sprite
-	bg = background sprite
-	gt = gate (exit) sprite
+	p	= player 		sprite
+	tr	= tile rock 	sprite
+	tl	= tile lava 	sprite
+	h	= heart 		sprite
+	bg	= background 	sprite
+	gt	= gate (exit) 	sprite
+	s	= scroll 		sprite
+	l	= letter 		sprite
 */
 
 typedef struct	s_sprites
@@ -92,8 +94,10 @@ typedef struct	s_sprites
 	void	*tl[14];
 	void	*h[2];
 	void	*bg[1];
-	void	*gt[1];
+	void	*gt[7];
 	void	*c[10];
+	void	*s[2];
+	void	*l[4];
 }				t_sprites;
 
 typedef struct	s_coin
@@ -160,13 +164,15 @@ typedef struct	game_struct
 	int		col;
 	int		rows;
 	int		exit_x;
+	int		exit_y;
 	int		lm;
 	int		fps;
 	int		go[2];
 	int 	po[2];
 	int		e;
 	int		dbg;
-
+	int		moves;
+	int		player_out;
 	t_sprites	*sprites;
 	player_st	*player;
 	t_list		*enemies;
@@ -206,6 +212,8 @@ void	init_camera(game_data *game);
 void	init_player(game_data *game);
 void	player_position(game_data *game);
 void	player(game_data *game);
+void	player_going_out(game_data *game);
+void	actual_position(game_data *game);
 
 void	init_sprites(game_data *game);
 void	load_sprite(char *s_name, int s_nbr, int s_type, game_data *game);
@@ -222,6 +230,8 @@ void	draw_block(int x, int y, void *sprite, game_data *game);
 void	show_debug(game_data *game);
 
 void	free_to_all(game_data *game);
+
+void	print_issue(game_data *game);
 
 /*
 char	**create_map(char *path);

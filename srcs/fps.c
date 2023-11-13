@@ -19,7 +19,7 @@ void show_fps(game_data *game)
 
 	fps = ft_itoa(game->fps);
 	debug_msg = ft_strjoin("FPS: ", fps);
-	mlx_string_put(game->mlx, game->mlx_win, 20, 30, 11001101, debug_msg);
+	mlx_string_put(game->mlx, game->mlx_win, 20, 43, 10110000, debug_msg);
 	free(fps);
 	free(debug_msg);
 }
