@@ -1,0 +1,27 @@
+/* XPM */
+static char *lava_drop3_51697129311[] = {
+/* columns rows colors chars-per-pixel */
+"16 16 5 1 ",
+"  c None",
+". c #CB1C02",
+"X c #F43308",
+"o c #FB5203",
+"O c #ECF438",
+/* pixels */
+"                ",
+"                ",
+"        O       ",
+"        O       ",
+"       OoO      ",
+"       OoO      ",
+"      OoooO     ",
+"      Oo.oO     ",
+"     OooOoO     ",
+"     Oo..oO     ",
+"     OooXoO     ",
+"      OoXoO     ",
+"      OoooO     ",
+"       OOO      ",
+"                ",
+"                "
+};
