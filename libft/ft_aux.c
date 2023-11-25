@@ -27,16 +27,6 @@ int	ft_putchar(char c)
 	return (write(1, &c, 1));
 }
 
-size_t	ft_strlen(const char *str)
-{
-	int	i;
-
-	i = -1;
-	while (str[++i])
-		;
-	return (i);
-}
-
 char	*ft_strchr(const char *str, int d)
 {
 	while (*str != '\0' && *str != (char)d)

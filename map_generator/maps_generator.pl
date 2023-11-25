@@ -24,7 +24,7 @@ for my $file_num (1..$num_files)
 
 	# Gere tamanhos de linha e coluna aleatórios
 	my $rows = int(rand(13)) + 5; # Pelo menos 5 linhas
-	my $cols = int(rand(14)) + 3; # Pelo menos 3 colunas
+	my $cols = int(rand(16)) + 3; # Pelo menos 3 colunas
 
 	# Calcule o número equilibrado de collectables com base no tamanho do mapa
 	my $collectables_count = int(($rows * $cols) / 15);  # Ajuste o valor 15 conforme necessário

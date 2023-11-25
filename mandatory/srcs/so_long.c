@@ -1,7 +1,5 @@
 #include "../includes/so_long.h"
 
-int quiser(int i, void *mlx_win);
-
 void    init_struct(game_data *game)
 {
 	game->img = calloc(sizeof(t_data), 1);
@@ -59,13 +57,16 @@ void    init_struct(game_data *game)
 
 	game->player->player_x = 0;
 	game->player->player_y = 0;
+
 	game->player->player_pos[0] = 0;
 	game->player->player_pos[1] = 0;
 	game->player->col_collected = 0;
 	game->player->col_q = 0;
 	game->player->collectable_pos[0] = 0;
 	game->player->collectable_pos[1] = 0;
+
 	game->player->distance_btw_camera = 0;
+
 	game->dbg = 0;
 }
 

@@ -1,7 +1,5 @@
 #include "../includes/so_long.h"
 
-int quiser(int i, void *mlx_win);
-
 void    init_struct(game_data *game)
 {
 	game->img = calloc(sizeof(t_data), 1);
@@ -25,8 +23,15 @@ void    init_struct(game_data *game)
 		free(game->enemies);
 		exit(EXIT_FAILURE);
 	} */
+	game->sinal = 1;
+	game->trig = 0;
+	game->triggerY_temp = 0;
+	game->triggerY_temp_2 = 0;
+	game->triggerY = 0;
+	game->triggerX = 0;
 	game->player_out = 0;
 	game->map = NULL;
+	game->visible_map = NULL;
 	game->img->img = NULL;
 	game->img->bits_per_pixel = 2000;
 	game->img->line_length = 200;
@@ -51,12 +56,16 @@ void    init_struct(game_data *game)
 	game->coin->current_frame = 0;
 	game->fps = 0;
 
-	/* game->width = 0;
-	game->height = 0; */
+	game->width = 0;
+	game->height = 0;
 	game->col = 0;
 	game->rows = 0;
 	game->exit_x = 0;
 
+	game->player->cont = 0;
+	game->player->xy_next[1] = 0;
+	game->player->xy_sto_last[0] = -1;
+	game->player->xy_sto_last[1] = -1;
 	game->player->player_x = 0;
 	game->player->player_y = 0;
 	game->player->player_pos[0] = 0;
@@ -65,13 +74,8 @@ void    init_struct(game_data *game)
 	game->player->col_q = 0;
 	game->player->collectable_pos[0] = 0;
 	game->player->collectable_pos[1] = 0;
+	game->player->distance_exceeded = 0;
 	game->dbg = 0;
-}
-
-void	init_window(game_data *game)
-{
-	game->mlx_win = mlx_new_window(game->mlx, game->col / 2, game->rows / 2, "So long");
-	game->img->img = mlx_new_image(game->mlx, game->col, game->rows + 1);
 }
 
 int check_file(char *map)
@@ -448,9 +452,13 @@ void	show_debug(game_data *game)
 void	draw_block(int x, int y, void *sprite, game_data *game)
 {
 	if (x < -BPX || y < -BPX || x > WINDOW_WIDTH || y > WINDOW_HEIGHT)
+	{
+		//ft_printf("%i, %i\n", x, y);
+		//ft_printf("nao printa\n");
 		return ;
+	}
 	mlx_put_image_to_window(game->mlx, game->mlx_win,
-		sprite, x + game->go[0], y + game->go[1]);
+		sprite, x, y );
 }
 
 static void	background(game_data *game)
@@ -459,16 +467,17 @@ static void	background(game_data *game)
 	int	cols;
 
 	rows = -1;
-	while (++rows <= game->rows)
+	while (++rows < game->rl)
 	{
 		cols = -1;
-		while (++cols < game->col)
+		while (++cols < game->cl)
 		{
-			if (game->map[rows][cols] == '0' || game->map[rows][cols] == 'M'
-			|| game->map[rows][cols] == 'P')
+			if (game->visible_map[rows][cols] == '0')
+			{
 				draw_block(cols * BPX + game->po[0],
 					rows * BPX + game->po[1], game->sprites->bg[0],
 					game);
+			}
 		}
 	}
 }
@@ -479,14 +488,8 @@ void	player_position(game_data *game)
 	player_st	*p;
 
 	p = game->player;
-	p->tll[0] = p->pp[0];
-	p->tll[1] = p->pp[1];
-	p->tr[0] = p->tll[0];
-	p->tr[1] = p->tll[1] + BPX;
-	p->bl[0] = p->tll[0] + BPX;
-	p->bl[1] = p->tll[1];
-	p->br[0] = p->tll[0] + BPX;
-	p->br[1] = p->tll[1] + BPX;
+	p->xy_last[0] = p->xy[0];
+	p->xy_last[1] = p->xy[1];
 }
 
 void	show_hud(game_data *game)
@@ -500,81 +503,90 @@ void	show_hud(game_data *game)
 
 void	wall(game_data *game)
 {
-	int	rows;
-	int	cols;
+	int	r;
+	int	c;
+	char **m;
+	int	trigger;
 
-	rows = -1;
-	while (++rows <= game->rows)
+	trigger = 1;
+	m = game->visible_map;
+	r = -1;
+	while (m[++r])
 	{
-		cols = -1;
-		while (++cols < game->col)
+		c = -1;
+		while (m[r][++c])
 		{
-			if (game->map[rows][cols] == '1')
+			if (m[r][c] == '1')
 			{
-				if (rows != 0 && cols > 0 && game->map[rows - 1][cols] == '1' &&
-					game->map[rows][cols - 1] == '1' && game->map[rows - 1][cols - 1] != '1')
-					draw_block(cols * BPX + game->po[0],
-						rows * BPX + game->po[1], game->sprites->tr[12],
+				if (r != 0 && c > 0 && m[r - 1][c] == '1' &&
+					m[r][c - 1] == '1' && m[r - 1][c - 1] != '1')
+					draw_block(c * BPX + game->po[0],
+						r * BPX + game->po[1], game->sprites->tr[12],
 						game);
-				else if (rows != 0 && game->map[rows - 1][cols] == '1' &&
-					game->map[rows][cols + 1] == '1' && game->map[rows - 1][cols + 1] != '1')
-					draw_block(cols * BPX + game->po[0],
-						rows * BPX + game->po[1], game->sprites->tr[11],
+				else if (r != 0 && m[r - 1][c] == '1' &&
+					m[r][c + 1] == '1' && m[r - 1][c + 1] != '1')
+					draw_block(c * BPX + game->po[0],
+						r * BPX + game->po[1], game->sprites->tr[11],
 						game);
-				else if (cols == game->col - 1 && (game->map[rows][cols - 1] != '1'))
-					draw_block(cols * BPX + game->po[0],
-						rows * BPX + game->po[1], game->sprites->tr[3],
+				else if (c == game->col - 1 && (m[r][c - 1] != '1'))
+					draw_block(c * BPX + game->po[0],
+						r * BPX + game->po[1], game->sprites->tr[3],
 						game);
-				else if (cols == 0 && (game->map[rows][cols + 1] != '1'))
-					draw_block(cols * BPX + game->po[0],
-						rows * BPX + game->po[1], game->sprites->tr[5],
+				else if (c == 0 && (m[r][c + 1] != '1'))
+					draw_block(c * BPX + game->po[0],
+						r * BPX + game->po[1], game->sprites->tr[5],
 						game);
-				else if (rows > 0 && game->map[rows][cols] == '1' && 
-					game->map[rows - 1][cols] != '1')
-					draw_block(cols * BPX + game->po[0],
-						rows * BPX + game->po[1], game->sprites->tr[1],
+				else if (r > 0 && m[r][c] == '1' && 
+					m[r - 1][c] != '1')
+					draw_block(c * BPX + game->po[0],
+						r * BPX + game->po[1], game->sprites->tr[1],
 						game);
 				else
 				{
-					if (cols == 0 && rows == 0)
-						draw_block(cols * BPX + game->po[0],
-							rows * BPX + game->po[1], game->sprites->s[0],
+					if (c == 0 && r == 0)
+						draw_block(c * BPX + game->po[0],
+							r * BPX + game->po[1], game->sprites->s[0],
 							game);
-					else if (cols == 1 && rows == 0)
-						draw_block(cols * BPX + game->po[0],
-							rows * BPX + game->po[1], game->sprites->s[1],
+					else if (c == 1 && r == 0)
+						draw_block(c * BPX + game->po[0],
+							r * BPX + game->po[1], game->sprites->s[1],
 							game);
 					else
-						draw_block(cols * BPX + game->po[0],
-							rows * BPX + game->po[1], game->sprites->tr[4],
+						draw_block(c * BPX + game->po[0],
+							r * BPX + game->po[1], game->sprites->tr[4],
+							game);
+					trigger = 0;
+				}
+				if (trigger == 1)
+				{
+					if (r != 0 && c > 0 && m[r][c - 1] != '1' && m[r][c] == '1' &&
+						m[r][c + 1] == '1' && m[r - 1][c] != '1')
+						draw_block(c * BPX + game->po[0],
+							r * BPX + game->po[1], game->sprites->tr[0],
+							game);
+					else if (r != 0 && c < game->col - 1 && c > 0 && m[r][c + 1] != '1' && m[r][c] == '1' &&
+						m[r][c - 1] == '1')
+						draw_block(c * BPX + game->po[0],
+							r * BPX + game->po[1], game->sprites->tr[2],
+							game);
+					else if (c < game->col - 1 && c > 0 && 
+						m[r][c + 1] != '1' && m[r][c - 1] != '1' &&
+						m[r][c] == '1' && m[r - 1][c] != '1')
+						draw_block(c * BPX + game->po[0],
+							r * BPX + game->po[1], game->sprites->tr[36],
+							game);
+					else if (c < game->col - 1 && c > 0 && 
+						m[r][c + 1] != '1' && m[r][c - 1] != '1' &&
+						m[r][c] == '1' && m[r - 1][c] == '1')
+						draw_block(c * BPX + game->po[0],
+							r * BPX + game->po[1], game->sprites->tr[35],
 							game);
 				}
-				if (rows != 0 && cols > 0 && game->map[rows][cols - 1] != '1' && game->map[rows][cols] == '1' &&
-					game->map[rows][cols + 1] == '1' && game->map[rows - 1][cols] != '1')
-					draw_block(cols * BPX + game->po[0],
-						rows * BPX + game->po[1], game->sprites->tr[0],
-						game);
-				else if (rows != 0 && cols < game->col - 1 && cols > 0 && game->map[rows][cols + 1] != '1' && game->map[rows][cols] == '1' &&
-					game->map[rows][cols - 1] == '1')
-					draw_block(cols * BPX + game->po[0],
-						rows * BPX + game->po[1], game->sprites->tr[2],
-						game);
-				else if (cols < game->col - 1 && cols > 0 && 
-					game->map[rows][cols + 1] != '1' && game->map[rows][cols - 1] != '1' &&
-					game->map[rows][cols] == '1' && game->map[rows - 1][cols] != '1')
-					draw_block(cols * BPX + game->po[0],
-						rows * BPX + game->po[1], game->sprites->tr[36],
-						game);
-				else if (cols < game->col - 1 && cols > 0 && 
-					game->map[rows][cols + 1] != '1' && game->map[rows][cols - 1] != '1' &&
-					game->map[rows][cols] == '1' && game->map[rows - 1][cols] == '1')
-					draw_block(cols * BPX + game->po[0],
-						rows * BPX + game->po[1], game->sprites->tr[35],
-						game);
+				trigger = 1;
 			}
-			else if (cols < game->col && game->map[rows][cols] == 'E')
-				draw_block(cols * BPX + game->po[0],
-				rows * BPX + game->po[1], game->sprites->gt[0],
+			else if (c < game->col && m[r][c] == 'E')
+				draw_block(c * BPX + game->po[0],
+				r * BPX + game->po[1], game->sprites->gt[0],
 				game);
 		}
 	}
@@ -592,12 +604,12 @@ void	item(game_data *game)
 	if (game->coin->current_frame == 9)
 		game->coin->current_frame = 0;
 	c = (game->coin->current_frame++) % game->coin->max_frame;
-	while (++rows <= game->rows)
+	while (++rows < game->rl)
 	{
 		cols = -1;
-		while (++cols < game->col)
+		while (++cols <= game->cl)
 		{
-			if (game->map[rows][cols] == 'C' )
+			if (game->visible_map[rows][cols] == 'C' )
 			{
 				draw_block(cols * BPX + game->po[0],
 					rows * BPX + game->po[1], s->c[c],
@@ -646,6 +658,7 @@ void	free_to_all(game_data *game)
 	mlx_destroy_display(game->mlx);
 	free(game->mlx);
 	free_map(game->map);
+	free_map(game->visible_map);
 }
 
 // General loop of the game which will be executed at best every 15ms
@@ -653,7 +666,9 @@ static int	game_loop(game_data *game)
 {
 	long long	now;
 	long long	diff_millisecs;
+	int			trigger;
 
+	trigger = 0;
 	now = millitimestamp();
 	diff_millisecs = now - game->lm;
 	if (diff_millisecs > 15)
@@ -661,14 +676,14 @@ static int	game_loop(game_data *game)
 		fps(game);
 		if (mlx_clear_window(game->mlx, game->mlx_win) == 1)
 			ft_printf("clear window success\n");
-		player_position(game);
+		if (game->player->distance_exceeded > 0)
+			if (mlx_clear_window(game->mlx, game->mlx_win) == 1)
+				ft_printf("clear window success\n");
 		background(game);
 		wall(game);
 		item(game);
 		//gate(game);
 		//monster(game);
-		if (game->player_out == 1)
-			ft_printf("\n\nAbCd|\n");
 
 		if (game->player_out == 1)
 			actual_position(game);
@@ -676,7 +691,12 @@ static int	game_loop(game_data *game)
 			player(game);
 		//if (game->dbg)
 			show_debug(game);
+		process_map(game, 1);
+		player_position_onthemap(game);
+		player_position(game);
 		show_hud(game);
+		ft_printf("\n\nCOIN COLLECTED::::::::::::::::::::::::::::::::::::::::: %i\nCOIN TO COLLECT:::::::::::::::::::::::::::::::::::::::: %i\n", game->player->col_collected, game->player->col_q);
+
 	}
 	return (1);
 }

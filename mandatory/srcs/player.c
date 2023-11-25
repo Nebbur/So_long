@@ -185,10 +185,8 @@ void	check_camera(game_data *game)
 	player_st	*p;
 
 	p = game->player;
-	if (p->player_x == 11)
-	{
-		mlx_get_data_addr
-	}
+	if (p->player_x > 10)
+		p->distance_exceeded = p->player_x - 10;
 }
 
 //main function player
@@ -196,8 +194,8 @@ void	player(game_data *game)
 {
 	if (game->player_out == 0)
 		actual_position(game);
-	if (game->rows > 11)
-		check_camera(game);
+	/* if (game->rows > 11)
+		check_camera(game); */
 	move_y(game);
 	move_x(game);
 	game->player->ac[0] = 0;

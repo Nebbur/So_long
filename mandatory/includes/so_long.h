@@ -63,7 +63,9 @@ typedef struct player_stt
 	int	exit_pos[2];
 	int	player_pos[2]; // 0 rows | 1 col
 	int	collectable_pos[2];
+
 	int	distance_btw_camera;
+	int	distance_exceeded;
 
 	int	ac[3];
 	int	nl;

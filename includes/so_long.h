@@ -59,11 +59,19 @@ typedef struct player_stt
 {
 	int	player_y;
 	int	player_x;
+	int	xy[2];
+	int	xy_next[2];
+	int xy_last[2];
+	int xy_sto_last[2]; //second to last
 	int	col_q;
 	int	col_collected;
 	int	exit_pos[2];
 	int	player_pos[2]; // 0 rows | 1 col
 	int	collectable_pos[2];
+
+	int	cont;
+
+	int	distance_exceeded;
 
 	int	pp[2];
 	int	tl;
@@ -159,6 +167,12 @@ typedef struct	game_struct
 	int		width;
 	int		height;
 	char	**map;
+	char	**visible_map;
+	
+	int		rl; // row limit
+	int		cl; // col limit
+	int		trig;
+
 	void 	*mlx;
     void 	*mlx_win;
 	int		col;
@@ -173,6 +187,13 @@ typedef struct	game_struct
 	int		dbg;
 	int		moves;
 	int		player_out;
+	int		pic;
+	int		pil;
+	int		triggerX;
+	int		triggerY;
+	int		triggerY_temp;
+	int		triggerY_temp_2;
+	int		sinal;
 	t_sprites	*sprites;
 	player_st	*player;
 	t_list		*enemies;
@@ -209,6 +230,7 @@ void	create_enemy(int row, int col, game_data *game);
 
 void	init_camera(game_data *game);
 
+void	player_position_onthemap(game_data *game);
 void	init_player(game_data *game);
 void	player_position(game_data *game);
 void	player(game_data *game);
@@ -220,8 +242,8 @@ void	load_sprite(char *s_name, int s_nbr, int s_type, game_data *game);
 char	*path_sprite(char *s_name, int i);
 void	destroy_sprites(game_data *game);
 
-void show_fps(game_data *game);
-void fps(game_data *game);
+void	show_fps(game_data *game);
+void	fps(game_data *game);
 long long millitimestamp(void);
 
 
@@ -232,6 +254,9 @@ void	show_debug(game_data *game);
 void	free_to_all(game_data *game);
 
 void	print_issue(game_data *game);
+
+void 	init_visible_map(game_data *game);
+void	process_map(game_data *game, int trigger);
 
 /*
 char	**create_map(char *path);
