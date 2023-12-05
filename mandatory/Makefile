@@ -3,7 +3,7 @@
 NAME = so_long
 
 CC = cc
-CFLAGS = -g #-Wall -Wextra -Werror -g
+CFLAGS = -O3 -g #-Wall -Wextra -Werror -g
 MLXFLAGS = -L ./minilibx -lm -lmlx -Ilmlx -lXext -lX11 #-fsanitize=address
 RM = rm -rf
 

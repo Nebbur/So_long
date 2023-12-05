@@ -27,14 +27,14 @@ int	ft_putchar(char c)
 	return (write(1, &c, 1));
 }
 
-char	*ft_strchr(const char *str, int d)
+/* char	*ft_strchr(const char *str, int d)
 {
 	while (*str != '\0' && *str != (char)d)
 		str++;
 	if (*str == (char)d)
 		return (&*((char *)str));
 	return (0);
-}
+} */
 
 int	ft_strcmp(char *s1, char *s2)
 {

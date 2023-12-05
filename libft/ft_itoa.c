@@ -12,58 +12,58 @@
 
 #include "libft.h"
 
-size_t	ft_intlen(int n)
+size_t ft_intlen(int n)
 {
-	long int	len;
+    size_t len = 1;  // Começa com 1 para o caso de n ser 0
 
-	len = 0;
-	if (n <= 0)
-		len++;
-	while (n != 0)
-	{
-		n /= 10;
-		len++;
-	}
-	return (len);
+    if (n < 0)
+    {
+        len++;  // Conta o sinal negativo
+        n = -n;  // Torna n positivo para facilitar a contagem dos dígitos
+    }
+
+    while (n > 9)
+    {
+        n /= 10;
+        len++;
+    }
+
+    return len;
 }
 
-static void	ft_inttochar(int n, int len, int i, char *str)
+static void ft_inttochar(int n, size_t len, size_t i, char *str)
 {
-	str[len] = '\0';
-	while (i + 1 < len)
-	{
-		str[len - 1] = n % 10 + 48;
-		n /= 10;
-		len--;
-	}
+    str[len] = '\0';  // Adiciona o terminador nulo ao final da string
+    while (len > i)
+    {
+        len--;
+        str[len] = n % 10 + '0';
+        n /= 10;
+    }
 }
 
-char	*ft_itoa(int n)
+char *ft_itoa(int n)
 {
-	size_t	len;
-	char	*str;
-	int		i;
+    size_t len;
+    char *str;
+    size_t i;
 
-	i = -1;
-	len = ft_intlen(n);
-	str = malloc(sizeof(char) * (len + 1));
-	if (!str)
-		return (NULL);
-	if (n == -2147483648)
-	{
-		str[0] = '-';
-		str[1] = '2';
-		n = 147483648;
-		i = 1;
-	}
-	else if (n < 0)
-	{
-		str[0] = '-';
-		n *= -1;
-		i = 0;
-	}
-	ft_inttochar(n, len, i, str);
-	return (str);
+    i = 0;
+    len = ft_intlen(n);
+    str = (char *)malloc(sizeof(char) * (len + 1));
+    if (!str)
+        return NULL;
+
+    if (n < 0)
+    {
+        str[0] = '-';
+        n = -n;  // Torna n positivo para a conversão dos dígitos
+        i = 1;
+    }
+
+    ft_inttochar(n, len, i, str);
+
+    return str;
 }
 
 /*int main()

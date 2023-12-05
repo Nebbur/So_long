@@ -1,7 +1,8 @@
 #ifndef SO_LONG_H
 # define SO_LONG_H
 
-# include "../minilibx/mlx.h"
+#include "../minilibx/mlx.h"
+
 # include "../libft/libft.h"
 # include "../minilibx/mlx.h"
 # include <X11/X.h>
@@ -56,26 +57,30 @@ typedef struct	s_data
 
 typedef struct player_stt
 {
-	int	player_y;
-	int	player_x;
+	int	init_xy[2];
+	int	xy[2];
+	int	xy_next[2];
+	int xy_last[2];
+	int xy_sto_last[2]; //second to last
 	int	col_q;
 	int	col_collected;
 	int	exit_pos[2];
 	int	player_pos[2]; // 0 rows | 1 col
 	int	collectable_pos[2];
 
-	int	distance_btw_camera;
+	int	cont;
+
 	int	distance_exceeded;
 
-	int	ac[3];
-	int	nl;
-	/*int	pp[2];
+	int	pp[2];
 	int	tl;
+	int	nl;
 	int	d;
+	int	ac[3];
 	int	tll[2];
 	int	tr[2];
 	int	bl[2];
-	int	br[2]; */
+	int	br[2];
 }		player_st;
 
 /*
@@ -100,6 +105,7 @@ typedef struct	s_sprites
 	void	*c[10];
 	void	*s[2];
 	void	*l[4];
+	void	*e[1];
 }				t_sprites;
 
 typedef struct	s_coin
@@ -110,39 +116,21 @@ typedef struct	s_coin
 
 /// @brief Enemy structure
 /*
-	pp : pixel position (pp[0] : x, pp[1] : y)
-	init_p : initial position (init_p[0] : x, init_p[1] : y)
-	a : top left		(a[0] : x, a[1] : y)
-	b : top right		(b[0] : x, b[1] : y)
-	c : bottom left 	(c[0] : x, c[1] : y)
-	d : bottom right 	(d[0] : x, d[1] : y)
 	alive : dead (0) or alive (1)
 	move : move(1) or not (0)
 	ta : tick attack
 	td : tick dead
 	direction : direction (0 left, 1 right)
-	la : last annimation
-	ap : annimation position
-	ai : annimation interval
 	mi : move interval
 */
 
 typedef struct s_enemy
 {
-	int	pp[2];
-	int	init_p[2];
-	int	a[2];
-	int	b[2];
-	int	c[2];
-	int	d[2];
 	int	alive;
 	int	move;
 	int	ta;
 	int	td;
 	int	direction;
-	int	la;
-	int	ap;
-	int	ai;
 	int	mi;
 }			t_enemy;
 
@@ -158,15 +146,25 @@ typedef struct s_enemy
 
 typedef struct	game_struct
 {
+	long long	frame_count;
+	long long	last_time;
+	long long	elapsed_time;
+	long long	current_time;
+
 	int		width;
 	int		height;
 	char	**map;
+	char	**visible_map;
+	
+	int		rl; // row limit
+	int		cl; // col limit
+	int		trig;
+
 	void 	*mlx;
     void 	*mlx_win;
 	int		col;
 	int		rows;
-	int		exit_x;
-	int		exit_y;
+	int		exit[2];
 	int		lm;
 	int		fps;
 	int		go[2];
@@ -175,6 +173,13 @@ typedef struct	game_struct
 	int		dbg;
 	int		moves;
 	int		player_out;
+	int		pic;
+	int		pil;
+	int		triggerX;
+	int		triggerY;
+	int		triggerY_temp;
+	int		triggerY_temp_2;
+	int		sinal;
 	t_sprites	*sprites;
 	player_st	*player;
 	t_list		*enemies;
@@ -206,11 +211,12 @@ void	set_action(int keycode, game_data *game);
 void	unset_action(int keycode, game_data *game);
 int		get_action_keycode(int keycode);
 
-//void	init_enemies(game_data *game);
+void	init_enemies(game_data *game);
 void	create_enemy(int row, int col, game_data *game);
 
-//void	init_camera(game_data *game);
+void	init_camera(game_data *game);
 
+void	player_position_onthemap(game_data *game);
 void	init_player(game_data *game);
 void	player_position(game_data *game);
 void	player(game_data *game);
@@ -222,17 +228,21 @@ void	load_sprite(char *s_name, int s_nbr, int s_type, game_data *game);
 char	*path_sprite(char *s_name, int i);
 void	destroy_sprites(game_data *game);
 
-void show_fps(game_data *game);
-void fps(game_data *game);
+void	show_fps(game_data *game);
+void	fps(game_data *game);
 long long millitimestamp(void);
-//void	show_debug(game_data *game);
 
 
 void	draw_block(int x, int y, void *sprite, game_data *game);
 
+void	show_debug(game_data *game);
+
 void	free_to_all(game_data *game);
 
 void	print_issue(game_data *game);
+
+void 	init_visible_map(game_data *game);
+void	process_map(game_data *game);
 
 /*
 char	**create_map(char *path);

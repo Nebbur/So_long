@@ -57,8 +57,7 @@ typedef struct	s_data
 
 typedef struct player_stt
 {
-	int	player_y;
-	int	player_x;
+	int	init_xy[2];
 	int	xy[2];
 	int	xy_next[2];
 	int xy_last[2];
@@ -73,15 +72,10 @@ typedef struct player_stt
 
 	int	distance_exceeded;
 
-	int	pp[2];
 	int	tl;
 	int	nl;
 	int	d;
 	int	ac[3];
-	int	tll[2];
-	int	tr[2];
-	int	bl[2];
-	int	br[2];
 }		player_st;
 
 /*
@@ -104,8 +98,9 @@ typedef struct	s_sprites
 	void	*bg[1];
 	void	*gt[7];
 	void	*c[10];
-	void	*s[2];
+	void	*s[4];
 	void	*l[4];
+	void	*e[2];
 }				t_sprites;
 
 typedef struct	s_coin
@@ -116,40 +111,28 @@ typedef struct	s_coin
 
 /// @brief Enemy structure
 /*
-	pp : pixel position (pp[0] : x, pp[1] : y)
-	init_p : initial position (init_p[0] : x, init_p[1] : y)
-	a : top left		(a[0] : x, a[1] : y)
-	b : top right		(b[0] : x, b[1] : y)
-	c : bottom left 	(c[0] : x, c[1] : y)
-	d : bottom right 	(d[0] : x, d[1] : y)
 	alive : dead (0) or alive (1)
 	move : move(1) or not (0)
 	ta : tick attack
 	td : tick dead
 	direction : direction (0 left, 1 right)
-	la : last annimation
-	ap : annimation position
-	ai : annimation interval
 	mi : move interval
 */
 
 typedef struct s_enemy
 {
-	int	pp[2];
-	int	init_p[2];
-	int	a[2];
-	int	b[2];
-	int	c[2];
-	int	d[2];
-	int	alive;
-	int	move;
-	int	ta;
-	int	td;
-	int	direction;
-	int	la;
-	int	ap;
-	int	ai;
-	int	mi;
+	long long	last_move_time;  // Nova variável para armazenar o tempo do último movimento
+	int			alive;
+	int			move;
+	int			ta;
+	int			td;
+	int			direction;
+	int			mi;
+	int			xy[2];
+	int			xy_last[2];
+	int			d;
+	int			id;
+	int			cont;
 }			t_enemy;
 
 /*
@@ -164,6 +147,16 @@ typedef struct s_enemy
 
 typedef struct	game_struct
 {
+	long long	frame_count;
+	long long	last_time;
+	long long	elapsed_time;
+	long long	current_time;
+
+	int		cont; //					-- enemies
+
+	int		is; //initial steps			-- enemies
+	int		id; // initial direction	-- enemies
+
 	int		width;
 	int		height;
 	char	**map;
@@ -177,12 +170,10 @@ typedef struct	game_struct
     void 	*mlx_win;
 	int		col;
 	int		rows;
-	int		exit_x;
-	int		exit_y;
+	int		exit[2];
 	int		lm;
 	int		fps;
 	int		go[2];
-	int 	po[2];
 	int		e;
 	int		dbg;
 	int		moves;
@@ -194,9 +185,11 @@ typedef struct	game_struct
 	int		triggerY_temp;
 	int		triggerY_temp_2;
 	int		sinal;
+
 	t_sprites	*sprites;
 	player_st	*player;
-	t_list		*enemies;
+	t_enemy		*enemy;		//enemy node
+	t_list		*enemies;	//enemies list
 	t_data		*img;
 	t_coin		*coin;
 
@@ -226,7 +219,8 @@ void	unset_action(int keycode, game_data *game);
 int		get_action_keycode(int keycode);
 
 void	init_enemies(game_data *game);
-void	create_enemy(int row, int col, game_data *game);
+void	create_enemy(int row, int col, int id, game_data *game);
+void	enemies(game_data *game);
 
 void	init_camera(game_data *game);
 
@@ -256,7 +250,7 @@ void	free_to_all(game_data *game);
 void	print_issue(game_data *game);
 
 void 	init_visible_map(game_data *game);
-void	process_map(game_data *game, int trigger);
+void	process_map(game_data *game);
 
 /*
 char	**create_map(char *path);
