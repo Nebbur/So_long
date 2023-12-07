@@ -82,7 +82,7 @@ char	**ft_split(char const *s, char c)
 	return (ft_helper(s, c, result));
 }
 
-/*int main()
+int main()
 {
 	char **res = ft_split("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed gravida pulvinar tortor, ut venenatis magna blandit ac. Etiam sit amet justo vitae odio venenatis tincidunt. Integer at mauris massa.", ' ');
 
@@ -98,4 +98,4 @@ char	**ft_split(char const *s, char c)
 	}
 	free(res);
 	return (0);
-}*/
+}
